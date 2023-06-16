@@ -6,8 +6,14 @@ import {
 } from "@thirdweb-dev/react";
 import { Mumbai } from "@thirdweb-dev/chains";
 import Head from "next/head";
-import { Container, Header, Navbar, Nav, Content, Button } from "rsuite";
-import "rsuite/dist/rsuite.min.css";
+import {
+  AppBar,
+  Toolbar,
+  Divider,
+  Typography,
+  Button,
+  Box,
+} from "@mui/material";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const address = useAddress();
@@ -17,34 +23,23 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>Test APP</title>
       </Head>
-      <Container>
-        <Header>
-          <Navbar>
-            <Navbar.Brand>Test</Navbar.Brand>
-            <Nav pullRight>
-              <Nav.Item>
-                <ConnectWallet
-                  theme="light"
-                  detailsBtn={() => {
-                    if (!address)
-                      return (
-                        <Button color="green" appearance="primary">
-                          Wallet Connected
-                        </Button>
-                      );
-
-                    return <Button>My wallet address is {address}</Button>;
-                  }}
-                />
-              </Nav.Item>
-            </Nav>
-          </Navbar>
-        </Header>
-        <Content>
-          <div>{address ? address.toString() : "nothing..."}</div>
-          <Component {...pageProps} />
-        </Content>
-      </Container>
+      <AppBar>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Token Creator
+          </Typography>
+          <ConnectWallet
+            theme="light"
+            detailsBtn={() => {
+              return (
+                <Button variant="contained" color="success">
+                  Wallet Connected
+                </Button>
+              );
+            }}
+          />
+        </Toolbar>
+      </AppBar>
     </ThirdwebProvider>
   );
 }
