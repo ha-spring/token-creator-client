@@ -12,7 +12,6 @@ const INITIAL_STATE = {
   mintable: false,
   burnable: false,
   pausable: false,
-  ownable: false,
 };
 
 export default function Form() {
@@ -25,7 +24,6 @@ export default function Form() {
   const [mintable, setMintable] = useState(false);
   const [burnable, setBurnable] = useState(false);
   const [pausable, setPausable] = useState(false);
-  const [ownable, setOwnable] = useState(false);
   const [tokenNameError, setTokenNameError] = useState("");
   const [symbolError, setSymbolError] = useState("");
   const [initialSupplyError, setInitialSupplyError] = useState("");
@@ -74,7 +72,6 @@ export default function Form() {
     console.log("Mintable:", mintable);
     console.log("Burnable:", burnable);
     console.log("Pausable:", pausable);
-    console.log("Ownable:", ownable);
 
     setTokenName(INITIAL_STATE.tokenName);
     setSymbol(INITIAL_STATE.symbol);
@@ -83,7 +80,6 @@ export default function Form() {
     setMintable(INITIAL_STATE.mintable);
     setBurnable(INITIAL_STATE.burnable);
     setPausable(INITIAL_STATE.pausable);
-    setOwnable(INITIAL_STATE.ownable);
   };
 
   const handleTokenNameChange = (e) => {
@@ -180,16 +176,6 @@ export default function Form() {
                 onChange={() => setPausable(!pausable)}
               />
               Pausable
-            </Label>
-          </InputContainer>
-          <InputContainer>
-            <Label>
-              <Checkbox
-                id="ownable"
-                checked={ownable}
-                onChange={() => setOwnable(!ownable)}
-              />
-              Ownable
             </Label>
           </InputContainer>
         </Column>
