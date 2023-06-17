@@ -6,14 +6,8 @@ import {
 } from "@thirdweb-dev/react";
 import { Mumbai } from "@thirdweb-dev/chains";
 import Head from "next/head";
-import {
-  AppBar,
-  Toolbar,
-  Divider,
-  Typography,
-  Button,
-  Box,
-} from "@mui/material";
+import Header from "../components/header";
+import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const address = useAddress();
@@ -21,25 +15,10 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ThirdwebProvider activeChain={Mumbai}>
       <Head>
-        <title>Test APP</title>
+        <title>Token Creator</title>
       </Head>
-      <AppBar>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Token Creator
-          </Typography>
-          <ConnectWallet
-            theme="light"
-            detailsBtn={() => {
-              return (
-                <Button variant="contained" color="success">
-                  Wallet Connected
-                </Button>
-              );
-            }}
-          />
-        </Toolbar>
-      </AppBar>
+      <Header />
+      <Component {...pageProps} />
     </ThirdwebProvider>
   );
 }
