@@ -13,15 +13,13 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.13.5",
     "@thirdweb-dev/react": "^3",
     "@thirdweb-dev/sdk": "^3",
-    "antd": "^5.6.1",
     "ethers": "^5",
     "next": "^13",
     "react": "^18.2",
     "react-dom": "^18.2",
-    "rsuite": "^5.35.1",
+    "solc-js": "^1.0.1",
     "styled-components": "^6.0.0-rc.3"
   },
   "devDependencies": {

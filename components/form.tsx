@@ -1,14 +1,19 @@
 "use client";
 
-import { ConnectWallet, useAddress } from "@thirdweb-dev/react";
-import { useState } from "react";
+import {
+  ConnectWallet,
+  useAddress,
+  useSDK,
+  useNetwork,
+} from "@thirdweb-dev/react";
+import { useState, useEffect } from "react";
+import { ContractFactory } from "ethers";
 import styled from "styled-components";
 
 const INITIAL_STATE = {
   tokenName: "",
   symbol: "",
   initialSupply: "",
-  decimals: "",
   mintable: false,
   burnable: false,
   pausable: false,
@@ -16,26 +21,45 @@ const INITIAL_STATE = {
 
 export default function Form() {
   const address = useAddress();
+  const sdk = useSDK();
+  const [{ data, error, loading }, switchNetwork] = useNetwork();
+
+  useEffect(() => {
+    if (
+      [
+        "Mumbai",
+        "Polygon Mainnet",
+        "Ethereum Mainnet",
+        "Base Goerli Testnet",
+        "Goerli",
+      ].includes(data?.chain?.name)
+    ) {
+      setNetworkError(false);
+    } else {
+      setNetworkError(true);
+    }
+  }, [data]);
 
   const [tokenName, setTokenName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [initialSupply, setInitialSupply] = useState("");
-  const [decimals, setDecimals] = useState("");
   const [mintable, setMintable] = useState(false);
   const [burnable, setBurnable] = useState(false);
   const [pausable, setPausable] = useState(false);
   const [tokenNameError, setTokenNameError] = useState("");
   const [symbolError, setSymbolError] = useState("");
   const [initialSupplyError, setInitialSupplyError] = useState("");
-  const [decimalsError, setDecimalsError] = useState("");
   const [addressError, setAddressError] = useState("");
+  const [currentNetwork, setCurrentNetwork] = useState("");
+  const [txInProgress, setTxInProgress] = useState(false);
+  const [contractAddress, setContractAddress] = useState("");
+  const [networkError, setNetworkError] = useState(false);
 
-  const createToken = () => {
+  const createToken = async () => {
     // Reset previous error messages
     setTokenNameError("");
     setSymbolError("");
     setInitialSupplyError("");
-    setDecimalsError("");
     setAddressError("");
 
     let hasErrors = false;
@@ -52,31 +76,51 @@ export default function Form() {
       setInitialSupplyError("Initial supply is required.");
       hasErrors = true;
     }
-    if (decimals === "") {
-      setDecimalsError("Decimals is required.");
-      hasErrors = true;
-    }
     if (!address) {
       setAddressError("Please connect your wallet.");
       hasErrors = true;
     }
 
-    if (hasErrors) {
+    if (hasErrors || networkError) {
       return;
     }
 
     console.log("Token name:", tokenName);
     console.log("Symbol:", symbol);
     console.log("Initial supply:", initialSupply);
-    console.log("Decimals:", decimals);
     console.log("Mintable:", mintable);
     console.log("Burnable:", burnable);
     console.log("Pausable:", pausable);
+    // const res = await fetch("http://localhost:3000/contract", {
+    const res = await fetch("/contract", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        name: tokenName,
+        symbol,
+        initialSupply,
+        isMintable: mintable,
+        isBurnable: burnable,
+        isPausable: pausable,
+      }),
+    });
+    const data = await res.json();
+    const factory = new ContractFactory(data.abi, data.bytecode, sdk.signer);
+    try {
+      const contract = await factory.deploy();
+      setTxInProgress(true);
+      await contract.deployTransaction.wait();
+      setTxInProgress(false);
+      setContractAddress(contract.address);
+    } catch {
+      return;
+    }
 
     setTokenName(INITIAL_STATE.tokenName);
     setSymbol(INITIAL_STATE.symbol);
     setInitialSupply(INITIAL_STATE.initialSupply);
-    setDecimals(INITIAL_STATE.decimals);
     setMintable(INITIAL_STATE.mintable);
     setBurnable(INITIAL_STATE.burnable);
     setPausable(INITIAL_STATE.pausable);
@@ -102,89 +146,88 @@ export default function Form() {
     setDecimalsError("");
   };
 
-  return (
-    <>
-      <Row>
-        <Column>
-          <InputContainer>
-            <Label>Token name</Label>
-            <Input
-              placeholder="e.g. My Token Name"
-              value={tokenName}
-              onChange={handleTokenNameChange}
-            />
-            {tokenNameError && <ErrorMessage>{tokenNameError}</ErrorMessage>}
-          </InputContainer>
-          <InputContainer>
-            <Label>Symbol</Label>
-            <Input
-              placeholder="e.g. SYM"
-              value={symbol}
-              onChange={handleSymbolChange}
-            />
-            {symbolError && <ErrorMessage>{symbolError}</ErrorMessage>}
-          </InputContainer>
-          <InputContainer>
-            <Label>Initial supply</Label>
-            <Input
-              type="number"
-              min="0"
-              placeholder="e.g. 123456789"
-              value={initialSupply}
-              onChange={handleInitialSupplyChange}
-            />
-            {initialSupplyError && (
-              <ErrorMessage>{initialSupplyError}</ErrorMessage>
-            )}
-          </InputContainer>
-          <InputContainer>
-            <Label>Decimals (0-18)</Label>
-            <Input
-              type="number"
-              min="0"
-              placeholder="e.g. 18"
-              value={decimals}
-              onChange={handleDecimalsChange}
-            />
-            {decimalsError && <ErrorMessage>{decimalsError}</ErrorMessage>}
-          </InputContainer>
-          <InputContainer>
-            <Label>
-              <Checkbox
-                id="mintable"
-                checked={mintable}
-                onChange={() => setMintable(!mintable)}
+  if (txInProgress) return <Label>Transaction in progress...</Label>;
+  else
+    return (
+      <>
+        {contractAddress !== "" && (
+          <Label>Contract Address: {contractAddress}</Label>
+        )}
+        {networkError && (
+          <ErrorMessageXL>
+            Unsupported network. Please switch to Polygon or Ethereum.
+          </ErrorMessageXL>
+        )}
+        <Row>
+          <Column>
+            <InputContainer>
+              <Label>Token name</Label>
+              <Input
+                placeholder="e.g. My Token Name"
+                value={tokenName}
+                onChange={handleTokenNameChange}
               />
-              Mintable
-            </Label>
-          </InputContainer>
-          <InputContainer>
-            <Label>
-              <Checkbox
-                id="burnable"
-                checked={burnable}
-                onChange={() => setBurnable(!burnable)}
+              {tokenNameError && <ErrorMessage>{tokenNameError}</ErrorMessage>}
+            </InputContainer>
+            <InputContainer>
+              <Label>Symbol</Label>
+              <Input
+                placeholder="e.g. SYM"
+                value={symbol}
+                onChange={handleSymbolChange}
               />
-              Burnable
-            </Label>
-          </InputContainer>
-          <InputContainer>
-            <Label>
-              <Checkbox
-                id="pausable"
-                checked={pausable}
-                onChange={() => setPausable(!pausable)}
+              {symbolError && <ErrorMessage>{symbolError}</ErrorMessage>}
+            </InputContainer>
+            <InputContainer>
+              <Label>Initial supply</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="e.g. 123456789"
+                value={initialSupply}
+                onChange={handleInitialSupplyChange}
               />
-              Pausable
-            </Label>
-          </InputContainer>
-        </Column>
-        <Column></Column>
-      </Row>
-      <Button onClick={createToken}>Create Token</Button>
-      <div>{addressError && <ErrorMessage>{addressError}</ErrorMessage>}</div>
-    </>
-  );
+              {initialSupplyError && (
+                <ErrorMessage>{initialSupplyError}</ErrorMessage>
+              )}
+            </InputContainer>
+            <InputContainer>
+              <Label>
+                <Checkbox
+                  id="mintable"
+                  checked={mintable}
+                  onChange={() => setMintable(!mintable)}
+                />
+                Mintable
+              </Label>
+            </InputContainer>
+            <InputContainer>
+              <Label>
+                <Checkbox
+                  id="burnable"
+                  checked={burnable}
+                  onChange={() => setBurnable(!burnable)}
+                />
+                Burnable
+              </Label>
+            </InputContainer>
+            <InputContainer>
+              <Label>
+                <Checkbox
+                  id="pausable"
+                  checked={pausable}
+                  onChange={() => setPausable(!pausable)}
+                />
+                Pausable
+              </Label>
+            </InputContainer>
+          </Column>
+          <Column></Column>
+        </Row>
+        <Button onClick={createToken}>Create Token</Button>
+        <div>{addressError && <ErrorMessage>{addressError}</ErrorMessage>}</div>
+      </>
+    );
 }
 
 const Row = styled.div`
@@ -241,4 +284,11 @@ const ErrorMessage = styled.span`
   color: red;
   font-size: 12px;
   margin-top: 5px;
+`;
+
+const ErrorMessageXL = styled.div`
+  width: 100%;
+  font-size: 1.5em;
+  margin-bottom: 5px;
+  color: red;
 `;
