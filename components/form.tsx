@@ -3,8 +3,8 @@
 import {
   ConnectWallet,
   useAddress,
-  useSDK,
   useNetwork,
+  useSigner,
 } from "@thirdweb-dev/react";
 import { useState, useEffect } from "react";
 import { ContractFactory } from "ethers";
@@ -21,19 +21,14 @@ const INITIAL_STATE = {
 
 export default function Form() {
   const address = useAddress();
-  const sdk = useSDK();
+  const signer = useSigner();
   const [{ data, error, loading }, switchNetwork] = useNetwork();
 
   useEffect(() => {
-    if (
-      [
-        "Mumbai",
-        "Polygon Mainnet",
-        "Ethereum Mainnet",
-        "Base Goerli Testnet",
-        "Goerli",
-      ].includes(data?.chain?.name)
-    ) {
+    if (data.chain === undefined) {
+      return;
+    }
+    if ([80001, 137, 1, 84531].includes(data?.chain?.chainId as number)) {
       setNetworkError(false);
     } else {
       setNetworkError(true);
@@ -91,8 +86,8 @@ export default function Form() {
     console.log("Mintable:", mintable);
     console.log("Burnable:", burnable);
     console.log("Pausable:", pausable);
-    // const res = await fetch("http://localhost:3000/contract", {
-    const res = await fetch("/contract", {
+    const res = await fetch("http://localhost:3000/contract", {
+      //const res = await fetch("/contract", {
       headers: {
         "Content-Type": "application/json",
       },
@@ -107,7 +102,7 @@ export default function Form() {
       }),
     });
     const data = await res.json();
-    const factory = new ContractFactory(data.abi, data.bytecode, sdk.signer);
+    const factory = new ContractFactory(data.abi, data.bytecode, signer);
     try {
       const contract = await factory.deploy();
       setTxInProgress(true);
@@ -126,24 +121,19 @@ export default function Form() {
     setPausable(INITIAL_STATE.pausable);
   };
 
-  const handleTokenNameChange = (e) => {
+  const handleTokenNameChange = (e: any) => {
     setTokenName(e.target.value);
     setTokenNameError("");
   };
 
-  const handleSymbolChange = (e) => {
+  const handleSymbolChange = (e: any) => {
     setSymbol(e.target.value);
     setSymbolError("");
   };
 
-  const handleInitialSupplyChange = (e) => {
+  const handleInitialSupplyChange = (e: any) => {
     setInitialSupply(e.target.value);
     setInitialSupplyError("");
-  };
-
-  const handleDecimalsChange = (e) => {
-    setDecimals(e.target.value);
-    setDecimalsError("");
   };
 
   if (txInProgress) return <Label>Transaction in progress...</Label>;
