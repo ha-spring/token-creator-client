@@ -86,8 +86,8 @@ export default function Form() {
     console.log("Mintable:", mintable);
     console.log("Burnable:", burnable);
     console.log("Pausable:", pausable);
-    const res = await fetch("http://localhost:3000/contract", {
-      //const res = await fetch("/contract", {
+    //const res = await fetch("http://localhost:3000/contract", {
+    const res = await fetch("/contract", {
       headers: {
         "Content-Type": "application/json",
       },
