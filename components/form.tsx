@@ -49,8 +49,10 @@ export default function Form() {
   const [txInProgress, setTxInProgress] = useState(false);
   const [contractAddress, setContractAddress] = useState("");
   const [networkError, setNetworkError] = useState(false);
+  const [createTokenInProgress, setCreateTokenInProgress] = useState(false);
 
   const createToken = async () => {
+    setCreateTokenInProgress(true);
     // Reset previous error messages
     setTokenNameError("");
     setSymbolError("");
@@ -77,15 +79,10 @@ export default function Form() {
     }
 
     if (hasErrors || networkError) {
+      setCreateTokenInProgress(false);
       return;
     }
 
-    console.log("Token name:", tokenName);
-    console.log("Symbol:", symbol);
-    console.log("Initial supply:", initialSupply);
-    console.log("Mintable:", mintable);
-    console.log("Burnable:", burnable);
-    console.log("Pausable:", pausable);
     //const res = await fetch("http://localhost:3000/contract", {
     const res = await fetch("/contract", {
       headers: {
@@ -110,6 +107,7 @@ export default function Form() {
       setTxInProgress(false);
       setContractAddress(contract.address);
     } catch {
+      setCreateTokenInProgress(false);
       return;
     }
 
@@ -119,6 +117,7 @@ export default function Form() {
     setMintable(INITIAL_STATE.mintable);
     setBurnable(INITIAL_STATE.burnable);
     setPausable(INITIAL_STATE.pausable);
+    setCreateTokenInProgress(false);
   };
 
   const handleTokenNameChange = (e: any) => {
@@ -214,7 +213,9 @@ export default function Form() {
           </Column>
           <Column></Column>
         </Row>
-        <Button onClick={createToken}>Create Token</Button>
+        <Button onClick={createToken}>
+          {createTokenInProgress ? "In progress..." : "Create Token"}
+        </Button>
         <div>{addressError && <ErrorMessage>{addressError}</ErrorMessage>}</div>
       </>
     );
